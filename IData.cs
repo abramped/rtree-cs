@@ -42,7 +42,7 @@ namespace SpatioTextual {
 	void Load(IEnumerable<TPoint> data);
 	IEnumerable<TPoint> Points { get; }
 	TPoint kNN(TPoint p, int k);
-	//IEnumerable<TPoint> RkNN(TPoint p, int k);
+	IEnumerable<TPoint> RkNN(TPoint p, int k);
     }
 
     public abstract class MBR<TPoint> where TPoint: class, IPoint {

@@ -36,9 +36,10 @@ namespace SpatioTextual
             //TestSortOneOneDimension();
             //TestSortOneTwoDimension();
             //TestSortTwoThreeDimension();
-	    TestLoad();
+	    //TestLoad();
 	    //TestKNN();
 	    //Test_TopKQueue();
+	    TestRkNN();
 	}
 
         private static void TestLoad()
@@ -190,7 +191,7 @@ namespace SpatioTextual
             RTree<Point1D> rt = new RTree<Point1D>(1);
             rt.Load(list);
 	    Debug.Assert(rt.kNN(new Point1D(8), 1).ToString() == "(9)", "1-NN of 8 is not 9");
-	    Debug.Assert(rt.kNN(new Point1D(8), 2).ToString() == "(25)", "2-NN of 8 is not 25");
+	    Debug.Assert(rt.kNN(new Point1D(8), 2).ToString() == "(6)", "2-NN of 8 is not 6");
 	}
 
 	private static void Test_TopKQueue()
@@ -207,6 +208,38 @@ namespace SpatioTextual
 	    queue.Add(5, new Point1D(14));
 	    queue.Add(2, new Point1D(2));
 	    Debug.Assert(queue.TopK.ToString() == "(40)");
+	}
+
+        private static void TestRkNN()
+        {
+            List<Point1D> list = new List<Point1D>();
+            list.Add (new Point1D(25));
+            list.Add (new Point1D(5));
+            list.Add (new Point1D(3));
+            list.Add (new Point1D(37));
+            list.Add (new Point1D(6));
+            list.Add (new Point1D(89));
+            list.Add (new Point1D(2));
+            list.Add (new Point1D(9));
+            list.Add (new Point1D(67));
+            list.Add (new Point1D(87));
+            list.Add (new Point1D(1));
+            list.Add (new Point1D(79));
+            list.Add (new Point1D(72));
+            list.Add (new Point1D(17));
+
+            RTree<Point1D> rt = new RTree<Point1D>(1);
+            rt.Load(list);
+
+	    List<Point1D> rnn_list;
+	    rnn_list = new List<Point1D>(rt.RkNN(new Point1D(8), 2));
+	    List<string> rnn_list_s = new List<string>();
+	    rnn_list.ForEach(delegate(Point1D pt) {
+		    rnn_list_s.Add(pt.ToString());
+	    });
+	    Console.WriteLine(string.Join(":", rnn_list_s));
+	    Debug.Assert(rnn_list_s.Count == 2 && rnn_list_s.Contains("(6)") &&
+		rnn_list_s.Contains("(9)"), "R2NN of 8 is not 6,9");
 	}
     }
 }

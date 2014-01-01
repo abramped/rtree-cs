@@ -25,7 +25,6 @@
 
 using System;
 using System.Collections.Generic;
-//using System.Linq;
 using System.Text;
 using System.Diagnostics;
 using SpatioTextual;
@@ -355,7 +354,7 @@ namespace SpatioTextual
 		    min_k.Add(dist,((LeafNode)node).Point);
 		} else {
 		    foreach (RTreeNode child in node.Children)
-			pq.Add(child);
+			if (child != null) pq.Add(child);
 		}
 	    }
 
@@ -370,12 +369,10 @@ namespace SpatioTextual
 
 		while(BFS_queue.Count > 0) {
 		    RTreeNode node = BFS_queue.Dequeue();
-		    if (node == null)
-			continue;
 		    //Console.WriteLine("Checking:" + node);
 		    if (! node.IsLeaf) {
 			foreach(RTreeNode child in node.Children)
-			    BFS_queue.Enqueue(child);
+			    if (child != null) BFS_queue.Enqueue(child);
 			continue;
 		    }
 
@@ -385,11 +382,24 @@ namespace SpatioTextual
 	    }
 	}
 
-	/*
-	public IEnumerable<TPoint> RkNN(TPoint p, int k)
+	public IEnumerable<TPoint> RkNN(TPoint q, int k)
 	{
-	    // Default
+	    // for each p \in D
+	    //    if dist(p,q) < dist(p, kNN(p,k))
+	    //        report p as RkNN(q,k)
+
+	    foreach (TPoint p in Points) {
+		double dist_p_q = p.Distance(q);
+		Console.WriteLine("Checking if {0} has {1} in {2}-NN at distance {3}", p, q, k, dist_p_q);
+		TPoint kNN_p = kNN(p, k+1); // p (being in Database) will also be in its own kNN
+		if (kNN_p == null)
+		    continue;
+		double dist_p_knn_p = p.Distance(kNN_p);
+		Console.WriteLine("{0}-NN of {1} is {2} at distance {3}", k, p,
+			kNN_p, dist_p_knn_p);
+		if (dist_p_q < dist_p_knn_p)
+		    yield return p;
+	    }
 	}
-	*/
     }
 }
