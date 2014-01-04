@@ -155,7 +155,7 @@ namespace SpatioTextual {
 		BL.p[i] = (BL.p[i] - circle.Radius);
 		TR.p[i] = (TR.p[i] + circle.Radius);
 	    }
-	    Console.WriteLine("MBR({0}) = {1}", circle, this);
+	    //Console.WriteLine("MBR({0}) = {1}", circle, this);
 	}
 
 	public override MBR<T> Duplicate()
@@ -263,7 +263,7 @@ namespace SpatioTextual {
 		some_overlap = some_overlap || overlap;
 	    }
 
-	    Console.WriteLine("Checking if {0} Overlaps {1}: contains = {2}, some_overlap = {3}", this, mbr, contains, some_overlap);
+	    //Console.WriteLine("Checking if {0} Overlaps {1}: contains = {2}, some_overlap = {3}", this, mbr, contains, some_overlap);
 	    if (contains || some_overlap)
 		    return true;
 

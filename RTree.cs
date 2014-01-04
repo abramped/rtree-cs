@@ -38,12 +38,15 @@ namespace SpatioTextual
         VerifyIfKPointsInQ_PCircle = 1
     }
 
-    public class RTree<TPoint> : Database<TPoint> where TPoint : PointBase  {
-
+    public class RTree<TPoint> : Database<TPoint> where TPoint : PointBase
+    {
 	private class RTreeNode
         {
             public static readonly int MIN_LOAD = 6;
             public static readonly int MAX_LOAD = 10;
+
+	    public bool io = false;
+	    private void IO() { if (! IsLeaf) io = true; }
 
             private int fill = 0;
             public virtual int Load { get { return fill; }}
@@ -52,7 +55,7 @@ namespace SpatioTextual
 	    public virtual int Size { get { return size; }}
 
             private RTreeNode[] children;
-            public RTreeNode[] Children { get { return children; }}
+            public RTreeNode[] Children { get { IO(); return children; }}
 
             public MBRSpatial<TPoint> MBR { get; set; }
 
@@ -68,15 +71,15 @@ namespace SpatioTextual
             
             public virtual Boolean IsLeaf { get { return false; } }
 
-            public RTreeNode this[int i]
-            {
-                get
-                {
-                    if (i >= fill)
-                        throw new IndexOutOfRangeException ("Not enough children: " + i);
-                    return children[i];
-                }
-            }
+            //public RTreeNode this[int i]
+            //{
+            //    get
+            //    {
+            //        if (i >= fill)
+            //            throw new IndexOutOfRangeException ("Not enough children: " + i);
+            //        return children[i];
+            //    }
+            //}
 
             // @returns False if Node is full after adding, true otherwise
             internal bool AddEntryReturnSpaceLeft (RTreeNode entry)
@@ -151,6 +154,26 @@ namespace SpatioTextual
         public int Dimension { get { return dim; }}
 
         public RTree(int d) { this.dim = d;}
+
+	// Also resets counter
+	public int IO(bool reset = true)
+	{
+	    int count = 0;
+	    Queue<RTreeNode> BFS_queue = new Queue<RTreeNode>();
+	    BFS_queue.Enqueue(root);
+
+	    while(BFS_queue.Count > 0) {
+	        RTreeNode node = BFS_queue.Dequeue();
+		if (node.io) count ++;
+	        //Console.WriteLine("Checking:" + node);
+	        if (! node.IsLeaf) {
+		    foreach(RTreeNode child in node.Children)
+			if (child != null) BFS_queue.Enqueue(child);
+	        }
+		if (reset) node.io = false;
+	    }
+	    return count-1; // Root is always in main memory
+	}
 
         public void Load (IEnumerable<TPoint> data)
 	{
@@ -459,20 +482,20 @@ namespace SpatioTextual
 	    pq.Add(root);
 	    while(! pq.IsEmpty && count < threshold) {
 		RTreeNode node = pq.DeleteMin();
-		Console.WriteLine("Checking node: {0}", node);
+		//Console.WriteLine("Checking node: {0}", node);
 		if (node.IsLeaf) {
 		    if (circle.Overlaps(((LeafNode)node).Point)) {
 			count += 1;
-			Console.WriteLine("{0} overlaps {1}", circle, node);
+			//Console.WriteLine("{0} overlaps {1}", circle, node);
 		    }
 		    continue;
 		}
 
 		bool contains = false;
-		Console.WriteLine("Does {0} overlap {1}? (no response means no)", circle, node.MBR);
+		//Console.WriteLine("Does {0} overlap {1}? (no response means no)", circle, node.MBR);
 		if (! circle.Overlaps(node.MBR, out contains))
 		    continue;
-		Console.WriteLine("Yes, and contains with {0} nodes", node.Size);
+		//Console.WriteLine("Yes, and contains with {0} nodes", node.Size);
 		if (contains) // else
 		    count += node.Size;
 		// Circle overlaps but does not contain node => partial overlap
@@ -480,7 +503,7 @@ namespace SpatioTextual
 		    if (child != null) pq.Add(child);
 	    }
 
-	    Console.WriteLine("Number of points (at most {0}) in {1} = {2}", threshold, circle, count);
+	    //Console.WriteLine("Number of points (at most {0}) in {1} = {2}", threshold, circle, count);
 	    return count;
 	}
 
@@ -488,7 +511,7 @@ namespace SpatioTextual
 	{
 	    foreach (TPoint p in Points) {
 		double dist_p_q = p.Distance(q);
-		Console.WriteLine("Checking if {0} has {1} in {2}-NN at distance {3}", p, q, k, dist_p_q);
+		//Console.WriteLine("Checking if {0} has {1} in {2}-NN at distance {3}", p, q, k, dist_p_q);
 
 		// Extra heuristic:
 		// 1. m = Count the number of points in a C

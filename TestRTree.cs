@@ -231,7 +231,7 @@ namespace SpatioTextual
 
             RTree<Point1D> rt = new RTree<Point1D>(1);
             rt.Load(list);
-	    Console.WriteLine(rt);
+	    //Console.WriteLine(rt);
 
 	    List<Point1D> rnn_list;
 	    rnn_list = new List<Point1D>(rt.RkNN(new Point1D(8), 2, heuristic));
@@ -239,9 +239,11 @@ namespace SpatioTextual
 	    rnn_list.ForEach(delegate(Point1D pt) {
 		    rnn_list_s.Add(pt.ToString());
 	    });
-	    Console.WriteLine(string.Join(":", rnn_list_s));
+	    //Console.WriteLine(string.Join(":", rnn_list_s));
 	    Debug.Assert(rnn_list_s.Count == 2 && rnn_list_s.Contains("(6)") &&
 		rnn_list_s.Contains("(9)"), "R2NN of 8 is not 6,9");
+
+	    Debug.Assert(rt.IO() == 2, "3 nodes should be read from disk");
 	}
     }
 }
