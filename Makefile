@@ -1,4 +1,4 @@
-CSFLAGS = -d:DEBUG
+CSFLAGS = -d:DEBUG -debug
 CC = dmcs
 
 all : TestRTree.exe

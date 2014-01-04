@@ -32,8 +32,8 @@ namespace SpatioTextual {
     {
     	IComparable this[int coord] { get; }
     	int Dimension { get; }
-	float Distance(IPoint q);
-	IPoint MoveTo(int coord, IComparable new_val);
+	double Distance(IPoint q);
+	IPoint MoveTo(int coord, IComparable new_val); // coord is 0 based
 	IPoint Duplicate();
 	string ToString();
     }
@@ -43,6 +43,15 @@ namespace SpatioTextual {
 	IEnumerable<TPoint> Points { get; }
 	TPoint kNN(TPoint p, int k);
 	IEnumerable<TPoint> RkNN(TPoint p, int k);
+    }
+
+    /* Not used */
+    public interface BoundingBody {
+	BoundingBody Expand(IPoint p);
+	BoundingBody Expand(BoundingBody body);
+	bool Contains(IPoint p);
+	bool Overlaps(BoundingBody body, out bool contains);
+	BoundingBody Duplicate();
     }
 
     public abstract class MBR<TPoint> where TPoint: class, IPoint {
@@ -78,6 +87,13 @@ namespace SpatioTextual {
 	    this.BL = mbr.BL;
 	    this.TR = mbr.TR;
 	}
+
+	//public MBR (TPoint center, double radius) : this ()
+	//{
+	//    ExpandToCircle(center, radius);
+	//}
+
+	//public abstract void ExpandToCircle(TPoint center, double radius);
 
 	public override string ToString()
 	{
@@ -150,7 +166,8 @@ namespace SpatioTextual {
 	    return extended;
 	}
 
-	public abstract float MinDistance(TPoint p);
+	public abstract double MinDistance(TPoint p);
+	public abstract double MaxDistance(TPoint p);
     }
 
 }

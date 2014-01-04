@@ -39,7 +39,8 @@ namespace SpatioTextual
 	    //TestLoad();
 	    //TestKNN();
 	    //Test_TopKQueue();
-	    TestRkNN();
+	    //TestRkNN(RkNN_Heuristic.BruteForce);
+	    TestRkNN(RkNN_Heuristic.VerifyIfKPointsInQ_PCircle);
 	}
 
         private static void TestLoad()
@@ -210,7 +211,7 @@ namespace SpatioTextual
 	    Debug.Assert(queue.TopK.ToString() == "(40)");
 	}
 
-        private static void TestRkNN()
+        private static void TestRkNN(RkNN_Heuristic heuristic)
         {
             List<Point1D> list = new List<Point1D>();
             list.Add (new Point1D(25));
@@ -230,9 +231,10 @@ namespace SpatioTextual
 
             RTree<Point1D> rt = new RTree<Point1D>(1);
             rt.Load(list);
+	    Console.WriteLine(rt);
 
 	    List<Point1D> rnn_list;
-	    rnn_list = new List<Point1D>(rt.RkNN(new Point1D(8), 2));
+	    rnn_list = new List<Point1D>(rt.RkNN(new Point1D(8), 2, heuristic));
 	    List<string> rnn_list_s = new List<string>();
 	    rnn_list.ForEach(delegate(Point1D pt) {
 		    rnn_list_s.Add(pt.ToString());

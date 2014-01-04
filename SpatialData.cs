@@ -31,51 +31,51 @@ using SpatioTextual;
 namespace SpatioTextual {
 
     public abstract class Point : IPoint {
-	internal int[] p;
+	internal double[] p;
 	protected int dim;
 
 	public Point(int dim)
 	{
 	    this.dim = dim;
-	    p = new int[dim];
+	    p = new double[dim];
 	    //Console.WriteLine("Constructing Point with dimension:" + this.Dimension + " (" + this.dim + ")");
 	}
 
         public virtual IComparable this[int coord]
         {
 	        get {
-		        if (coord > dim)
+		        if (coord >= dim)
 		            throw new IndexOutOfRangeException("Point1D: coord = " + coord);
         		return this.p[coord];
 	        }
 	        protected set {
-        		if (coord > dim)
+        		if (coord >= dim)
 		            throw new IndexOutOfRangeException("Point: coord = " + coord);
-        		if (! (value is int))
+        		if (! (value is double))
 		            throw new ArgumentException("val of type:" + value.GetType());
-        		this.p[coord] = (int) value;
+        		this.p[coord] = (double) value;
 	        }
         }
 
         public virtual int Dimension { get { return dim; }}
 
-	public float Distance(IPoint p)
+	public double Distance(IPoint p)
 	{
 	    Point q = p as Point;
 	    if (q == null)
 		throw new ArgumentException("IPoint is not of type Point");
-	    float dist = 0;
+	    double dist = 0;
 	    for (int i=0; i<dim; ++i)
 		dist += ((this.p[i] - q.p[i])*(this.p[i] - q.p[i]));
-	    return (float)Math.Sqrt(dist);
+	    return Math.Sqrt(dist);
 	}
 
 	public IPoint MoveTo(int coord, IComparable val)
 	{
-	    if (! (val is int))
+	    if (! (val is double))
 		throw new ArgumentException("val of type:" + val.GetType());
 	    Point newp = Duplicate() as Point;
-	    newp.p[coord] = (int) val;
+	    newp.p[coord] = (double) val;
 	    return newp;
 	}
 
@@ -90,7 +90,20 @@ namespace SpatioTextual {
 
     public class PointBase : Point
     {
-	public PointBase(int dim, int p=0, int q=0, int r=0) : base(dim)
+	public static PointBase Create(double[] pt)
+	{
+	    if (pt.Length == 1) return new Point1D(pt[0]);
+	    if (pt.Length == 2) return new Point2D(pt[0], pt[1]);
+	    if (pt.Length == 3) return new Point3D(pt[0], pt[1], pt[2]);
+	    throw new ArgumentException("Invalid array size");
+	}
+
+	public PointBase(double[] pt) : base(pt.Length)
+	{
+	    pt.CopyTo(this.p, 0);
+	}
+
+	public PointBase(int dim, double p=0, double q=0, double r=0) : base(dim)
 	{
 	    if (dim >= 1) this.p[0] = p;
 	    if (dim >= 2) this.p[1] = q;
@@ -112,19 +125,22 @@ namespace SpatioTextual {
 
     public class Point1D : PointBase
     {
-        public Point1D (int p) : base (1, p) { }
+        public Point1D (double p) : base (1, p) { }
+	public Point1D (double[] p) : base (p) { }
 	public override IPoint Duplicate() { return Duplicate(new Point1D(0)); }
     }
 
     public class Point2D : PointBase
     {
-        public Point2D (int p, int q) : base(2, p, q) { }
+        public Point2D (double p, double q) : base(2, p, q) { }
+	public Point2D (double[] p) : base (p) { }
 	public override IPoint Duplicate() { return Duplicate(new Point2D(0,0)); }
     }
     
     public class Point3D : PointBase
     {
-        public Point3D (int p, int q, int r):base (3, p, q, r) { }
+        public Point3D (double p, double q, double r):base (3, p, q, r) { }
+	public Point3D (double[] p) : base (p) { }
 	public override IPoint Duplicate() { return Duplicate(new Point3D(0,0,0)); }
     }
 
@@ -133,18 +149,26 @@ namespace SpatioTextual {
 	public MBRSpatial(T p) : base(p) { }
 	public MBRSpatial(T p, T q) : base(p, q) { }
 	public MBRSpatial(MBRSpatial<T> mbr) : base(mbr) { }
+	public MBRSpatial(Circle<T> circle) : base(circle.Center)
+	{
+	    for (int i=0; i < circle.Center.Dimension; ++i) {
+		BL.p[i] = (BL.p[i] - circle.Radius);
+		TR.p[i] = (TR.p[i] + circle.Radius);
+	    }
+	    Console.WriteLine("MBR({0}) = {1}", circle, this);
+	}
 
 	public override MBR<T> Duplicate()
 	{
 	    return new MBRSpatial<T>(this);
 	}
 
-	public override float MinDistance(T pt)
+	public override double MinDistance(T pt)
 	{
-	    int[] BL = this.BL.p;
-	    int[] TR = this.TR.p;
-	    int[] p = pt.p;
-	    float dist = 0.0f;
+	    double[] BL = this.BL.p;
+	    double[] TR = this.TR.p;
+	    double[] p = pt.p;
+	    double dist = 0.0;
 	    for (int i=0; i < this.BL.Dimension; ++i) {
 		if (p[i].CompareTo(BL[i]) < 0)
 		    dist += ((BL[i] - p[i])*(BL[i] - p[i]));
@@ -152,9 +176,105 @@ namespace SpatioTextual {
 		    dist += ((TR[i] - p[i])*(TR[i] - p[i]));
 	    }
 
-	    return (float)Math.Sqrt(dist);
+	    return Math.Sqrt(dist);
 	}
 
+	public override double MaxDistance(T pt)
+	{
+	    double[] BL = this.BL.p;
+	    double[] TR = this.TR.p;
+	    double[] p = pt.p;
+	    double dist = 0.0;
+	    for (int i=0; i < this.BL.Dimension; ++i) {
+		if (p[i].CompareTo((BL[i]+TR[i])/2) < 0)
+		    dist += ((TR[i] - p[i])*(TR[i] - p[i]));
+		else
+		    dist += ((BL[i] - p[i])*(BL[i] - p[i]));
+	    }
+
+	    return Math.Sqrt(dist);
+	}
+
+	public IEnumerable<T> Vertices {
+	    get {
+		int dim = BL.Dimension;
+		int num = (int) Math.Pow(2, dim);
+
+		for (int v=0; v<num; ++v) {
+		    //Point vertex = BL.Duplicate() as T; // create new point
+		    double[] vertex = new double[dim];
+		    for (int bit=0; bit<dim; ++bit) {
+			if ((v & (1 << bit))==(1<<bit))
+			    vertex[bit] = (double) TR.p[bit];
+			else
+			    vertex[bit] = (double) BL.p[bit];
+		    }
+		    yield return PointBase.Create(vertex) as T;
+		}
+	    }
+	}
+
+	/*
+	public override void ExpandToCircle(T center, double radius)
+	{
+	    for (int i=1; i <= center.dimension; ++i) {
+		BL[i] = (BL[i] - radius);
+		TR[i] = (TR[i] + radius);
+	    }
+	}*/
+
+    }
+
+    public class Circle<TPoint> where TPoint: PointBase {
+	TPoint center;
+        public TPoint Center { get { return center; }}
+
+	double radius;
+	public double Radius { get { return radius; }}
+
+	public Circle(TPoint p, double r)
+	{
+	    this.center = p;
+	    this.radius = r;
+	}
+
+	public bool Overlaps(TPoint pt)
+	{
+	    return (Center.Distance(pt) <= Radius);
+	}
+
+	// Check if circle overlaps with mbr, and if overlaps, then
+	// whether the circle contains the mbr
+	public bool Overlaps(MBRSpatial<TPoint> mbr, out bool contains)
+	{
+	    /*
+	     * 4 cases:
+	     *   a. Circle contains MBR -- contains (iff all vertices of MBR are in circle)
+	     *   b. MBR contains Circle -- overlap (iff MBR(Circle) is contained in MBR)
+	     *   c. MBR and Circle are partially overlapping -- overlap (iff some vertex of MBR is contained in Circle)
+	     *   d. O/W disjoint
+	     */
+
+	    bool some_overlap = false;
+	    contains = true;
+	    foreach (TPoint vertex in mbr.Vertices) {
+		bool overlap = Overlaps(vertex);
+		contains = contains && overlap;
+		some_overlap = some_overlap || overlap;
+	    }
+
+	    Console.WriteLine("Checking if {0} Overlaps {1}: contains = {2}, some_overlap = {3}", this, mbr, contains, some_overlap);
+	    if (contains || some_overlap)
+		    return true;
+
+	    // Circle could be contained in MBR, which also counts as overlap
+	    return mbr.Contains(new MBRSpatial<TPoint>(this));
+	}
+
+	public override string ToString()
+	{
+	    return string.Format("Circle({0},{1})", Center, Radius);
+	}
     }
 
     public class Test {
@@ -166,7 +286,7 @@ namespace SpatioTextual {
 
 	private static void TestDistance()
 	{
-	    float d1 = (new Point1D(3)).Distance(new Point1D(16));
+	    double d1 = (new Point1D(3)).Distance(new Point1D(16));
 	    Debug.Assert(d1 == 13, String.Format("Distance between 3 and 16 is not 13 but {0}", d1));
 	}
 
